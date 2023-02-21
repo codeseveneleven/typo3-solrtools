@@ -12,9 +12,9 @@
 
 $EM_CONF['solr_tools'] = [
     'title' => '(Code711) Solr Tools',
-    'description' => 'A CLI tool to set file meta-data for solr',
+    'description' => 'This Extension provides CLI Tools to initialize the EXT:solr index queues from the command line, and to scan for file-references in the content to add the corresponding sites to the sys_file metadata where a file is being used.',
     'category' => 'plugin',
-    'version' => '1.0.0',
+    'version' => '1.0.1',
     'state' => 'stable',
     'clearcacheonload' => 1,
     'author' => 'Frank Berger',
