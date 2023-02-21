@@ -56,7 +56,7 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
         $sitesToLoad = (array)$input->getArgument('site');
 
         $siteFinder = GeneralUtility::makeInstance(SiteFinder::class);
-        if (in_array('all', $sitesToLoad)) {
+        if (in_array('all', $sitesToLoad) || in_array('ALL', $sitesToLoad)) {
             $sites = $siteFinder->getAllSites();
         } else {
             $sites = [];
