@@ -98,12 +98,32 @@ class SolrfilemetaCommand extends Command
                       ->executeQuery();
 
         while ($row = $stmt->fetchAssociative()) {
-            /** @var array<string,string|int> $row */
-
-            /** @var int[] $matches */
+            /**
+             * @var array<string,string|int> $row
+             * @var int[] $matches
+             */
             \preg_match_all('/t3:\/\/file\?uid=(\d+)/', (string)$row['bodytext'], $matches);
+            foreach ($matches[1] as $fileid) {
+                $this->runForFile((int)$fileid, (int)$row['pid'], $output, $extensions);
+            }
+        }
 
+        $query = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('tt_content');
+        $stmt = $query->select('*')
+                      ->from('tt_content')
+                      ->where(
+                          $query->expr()->like('header_link', '"%t3://file?uid=%"'),
+                          $query->expr()->eq('deleted', 0),
+                          $query->expr()->eq('hidden', 0)
+                      )
+                      ->executeQuery();
 
+        while ($row = $stmt->fetchAssociative()) {
+            /**
+             * @var array<string,string|int> $row
+             * @var int[] $matches
+             */
+            \preg_match_all('/t3:\/\/file\?uid=(\d+)/', (string)$row['header_link'], $matches);
             foreach ($matches[1] as $fileid) {
                 $this->runForFile((int)$fileid, (int)$row['pid'], $output, $extensions);
             }

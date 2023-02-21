@@ -17,6 +17,12 @@ The tools are aimed for installations with multiple sites. They will not do anyt
 1.0.0
 - Initial release
 
+1.0.1
+- Updated TER Description
+
+1.0.2
+- added promised but missing scan for file-references in tt_content:header_link
+
 ## solr:tools:createindex
 
 <pre>
