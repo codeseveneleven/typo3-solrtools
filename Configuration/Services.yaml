@@ -1,0 +1,22 @@
+services:
+  _defaults:
+    autowire: false
+    autoconfigure: true
+    public: false
+
+  Sudhaus7\SolrTools\:
+    resource: '../Classes/*'
+
+
+  Sudhaus7\SolrTools\Commands\SolrfilemetaCommand:
+    tags:
+      - name: 'console.command'
+        command: 'solr:tools:filemeta'
+        description: 'This tool searches for relations of files in the database and adds the correct site reference in the Files metadata, in order for EXT:solr to index those files correctly'
+        schedulable: false
+  Sudhaus7\SolrTools\Commands\SolrReindexCommand:
+    tags:
+      - name: 'console.command'
+        command: 'solr:tools:reindex'
+        description: 'This tool creates reindex tasks for solr per table and site or all sites'
+        schedulable: true
