@@ -10,4 +10,4 @@ jobs:
       - name: Psalm
         uses: docker://vimeo/psalm-github-actions
         with:
-          args: --shepherd
+          args: --shepherd --php-version=8.1

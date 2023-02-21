@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the TYPO3 project.
@@ -20,7 +21,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use TYPO3\CMS\Core\FormProtection\Exception;
+use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -51,7 +52,8 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
     }
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $sitesToLoad = $input->getArgument('site');
+        /** @var string[] $sitesToLoad */
+        $sitesToLoad = (array)$input->getArgument('site');
 
         $siteFinder = GeneralUtility::makeInstance(SiteFinder::class);
         if (in_array('all', $sitesToLoad)) {
@@ -60,33 +62,46 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
             $sites = [];
             foreach ($sitesToLoad as $key) {
                 try {
-                    $sites[] = $siteFinder->getSiteByIdentifier($key);
-                } catch (Exception $e) {
-                    $output->writeln($e->getMessage());
+                    $sites[] = $siteFinder->getSiteByIdentifier( $key );
+                } catch ( SiteNotFoundException $e ) {
+                    $output->writeln( $e->getMessage() );
                 }
+
             }
         }
 
-        $options = $input->getOption('what');
+        /** @var string[] $options */
+        $options = (array)$input->getOption('what');
 
         $solrSiteFinder = GeneralUtility::makeInstance(SiteRepository::class);
 
         foreach ($sites as $site) {
+            /** @var ?Site $solrSite */
             $solrSite = $solrSiteFinder->getSiteByRootPageId($site->getRootPageId());
-            $output->writeln('Running ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain());
-            if ($input->getOption('cleanup')) {
-                $output->writeln('Cleaning ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain());
-                $this->cleanUpIndex($solrSite, $options);
+            if ($solrSite instanceof Site) {
+                $output->writeln( 'Running ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() );
+                if ( $input->getOption( 'cleanup' ) ) {
+                    $output->writeln( 'Cleaning ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() );
+                    $this->cleanUpIndex( $solrSite, $options );
+                }
+                // initialize for re-indexing
+                /* @var Queue $indexQueue */
+                $indexQueue                      = GeneralUtility::makeInstance( Queue::class );
+
+                $indexQueue->getInitializationService()
+                           ->initializeBySiteAndIndexConfigurations( $solrSite, $options );
             }
-            // initialize for re-indexing
-            /* @var Queue $indexQueue */
-            $indexQueue = GeneralUtility::makeInstance(Queue::class);
-            $indexQueueInitializationResults = $indexQueue->getInitializationService()
-                                                          ->initializeBySiteAndIndexConfigurations($solrSite, $options);
         }
 
         return 0;
     }
+
+    /**
+     * @param Site $site
+     * @param string[] $what
+     *
+     * @return bool
+     */
     protected function cleanUpIndex(Site $site, array $what): bool
     {
         $cleanUpResult = true;
@@ -96,7 +111,7 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
         $enableCommitsSetting = $solrConfiguration->getEnableCommits();
 
         foreach ($what as $indexingConfigurationName) {
-            $type = $solrConfiguration->getIndexQueueTableNameOrFallbackToConfigurationName($indexingConfigurationName);
+            $type = $solrConfiguration->getIndexQueueTypeOrFallbackToConfigurationName($indexingConfigurationName);
             $typesToCleanUp[] = $type;
         }
 
