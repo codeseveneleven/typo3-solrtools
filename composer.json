@@ -1,12 +1,16 @@
 {
 	"name": "code711/solrtools",
 	"description": "A set of CLI tools to manage Solr indexes for multi site setups",
+	"keywords": ["solr","typo3"],
+	"homepage": "https://github.com/codeseveneleven/typo3-solrtools",
 	"type": "typo3-cms-extension",
 	"license": "MIT",
 	"authors": [
 		{
 			"name": "Frank Berger",
-			"email": "fberger@code711.de"
+			"email": "fberger@code711.de",
+			"homepage": "https://code711.de",
+			"role": "Developer"
 		}
 	],
 	"config": {
