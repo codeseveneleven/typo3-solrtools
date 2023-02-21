@@ -14,9 +14,10 @@ services:
         command: 'solr:tools:filemeta'
         description: 'This tool searches for relations of files in the database and adds the correct site reference in the Files metadata, in order for EXT:solr to index those files correctly'
         schedulable: false
-  Code711\SolrTools\Commands\SolrReindexCommand:
+
+  Code711\SolrTools\Commands\SolrCreateIndexCommand:
     tags:
       - name: 'console.command'
-        command: 'solr:tools:reindex'
-        description: 'This tool creates reindex tasks for solr per table and site or all sites'
+        command: 'solr:tools:createindex'
+        description: 'This tool creates (re)index tasks for solr per table and site or all sites'
         schedulable: true

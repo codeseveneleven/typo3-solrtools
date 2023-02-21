@@ -1,5 +1,5 @@
 {
-	"name": "codeseveneleven/solrtools",
+	"name": "code711/solrtools",
 	"description": "A set of CLI tools to manage Solr indexes for multi site setups",
 	"type": "typo3-cms-extension",
 	"license": "MIT",
@@ -35,7 +35,8 @@
 		"vimeo/psalm": "^4.10",
 		"typo3/cms-lowlevel": "^11.5",
 		"helhum/typo3-console": "*",
-		"typo3/coding-standards": "^0.5"
+		"typo3/coding-standards": "^0.5",
+		"hmmh/solr-file-indexer": "^2.5"
 	},
 
 	"autoload": {

@@ -20,6 +20,7 @@ use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\SiteFinder;
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class SolrfilemetaCommand extends Command
@@ -29,10 +30,28 @@ class SolrfilemetaCommand extends Command
         $this->setDescription('This tool searches for relations of files in the database and adds the correct site reference in the Files metadata, in order for EXT:solr to index those files correctly
         ');
         $this->addOption('ext', null, InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, 'File extensions to allow', ['doc', 'docx', 'pdf']);
+        $this->addOption('cleanup', 'c', InputOption::VALUE_NONE, 'clean the site field in all meta data');
+
     }
 
     public function run(InputInterface $input, OutputInterface $output)
     {
+
+        if (!ExtensionManagementUtility::isLoaded( 'solr_file_indexer')) {
+            $output->writeln( 'solr_file_indexer needs to be installed!',OutputInterface::VERBOSITY_QUIET);
+            exit;
+        }
+
+        if ($input->getOption( 'cleanup')) {
+            $output->writeln( 'Cleaning the metadata from all sites');
+            GeneralUtility::makeInstance( ConnectionPool::class )->getConnectionForTable( 'sys_file_metadata' )
+                          ->update(
+                              'sys_file_metadata',
+                              ['enable_indexing'=>null],
+                              ['deleted'=>0]
+                          );
+        }
+
         /** @var \TYPO3\CMS\Core\Database\Query\QueryBuilder $query */
         $query = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_reference');
         /** @var \Doctrine\DBAL\Result $stmt */

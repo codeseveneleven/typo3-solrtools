@@ -10,7 +10,7 @@
  *
  */
 
-namespace SUDHAUS7\SolrTools\Commands;
+namespace Code711\SolrTools\Commands;
 
 use ApacheSolrForTypo3\Solr\ConnectionManager;
 use ApacheSolrForTypo3\Solr\Domain\Site\Site;
@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\FormProtection\Exception;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class SolrReindexCommand extends \Symfony\Component\Console\Command\Command
+class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
 {
     /**
      * @inheritDoc
@@ -35,14 +35,14 @@ class SolrReindexCommand extends \Symfony\Component\Console\Command\Command
 
         For example:
         This will create an index-task for all sites and all pages and will clean the index first
-        ./vendor/bin/typo3 solr:tools:reindex -w pages --cleanup ALL
+        ./vendor/bin/typo3 solr:tools:createindex -w pages --cleanup ALL
 
         ');
 
         $this->addArgument(
             'site',
             InputArgument::REQUIRED | InputArgument::IS_ARRAY,
-            'Sites or ALL for all sites'
+            'Site identifier or ALL for all sites'
         );
 
         $this->addOption('what', 'w', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'what to index (eq pages)');
