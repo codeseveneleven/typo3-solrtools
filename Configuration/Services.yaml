@@ -4,17 +4,17 @@ services:
     autoconfigure: true
     public: false
 
-  Sudhaus7\SolrTools\:
+  Code711\SolrTools\:
     resource: '../Classes/*'
 
 
-  Sudhaus7\SolrTools\Commands\SolrfilemetaCommand:
+  Code711\SolrTools\Commands\SolrfilemetaCommand:
     tags:
       - name: 'console.command'
         command: 'solr:tools:filemeta'
         description: 'This tool searches for relations of files in the database and adds the correct site reference in the Files metadata, in order for EXT:solr to index those files correctly'
         schedulable: false
-  Sudhaus7\SolrTools\Commands\SolrReindexCommand:
+  Code711\SolrTools\Commands\SolrReindexCommand:
     tags:
       - name: 'console.command'
         command: 'solr:tools:reindex'

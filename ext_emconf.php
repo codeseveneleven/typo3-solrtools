@@ -11,15 +11,15 @@
  */
 
 $EM_CONF['solr_tools'] = [
-    'title' => '(Sudhaus7) Solr Tools',
+    'title' => '(Code711) Solr Tools',
     'description' => 'A CLI tool to set file meta-data for solr',
     'category' => 'plugin',
     'version' => '1.0.0',
     'state' => 'stable',
     'clearcacheonload' => 1,
     'author' => 'Frank Berger',
-    'author_email' => 'fberger@sudhaus7.de',
-    'author_company' => 'Sudhaus7, ein Label der B-Factor GmbH',
+    'author_email' => 'fberger@code711.de',
+    'author_company' => 'Code711, ein Label der B-Factor GmbH',
     'constraints' => [
         'depends' => [
             'typo3' => '11.5.0-11.5.99',
@@ -31,7 +31,7 @@ $EM_CONF['solr_tools'] = [
     ],
     'autoload' => [
         'psr-4' => [
-            'Sudhaus7\\SolrTools\\' => 'Classes',
+            'Code711\\SolrTools\\' => 'Classes',
         ],
     ],
 ];

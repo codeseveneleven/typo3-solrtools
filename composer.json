@@ -6,7 +6,7 @@
 	"authors": [
 		{
 			"name": "Frank Berger",
-			"email": "fberger@sudhaus7.de"
+			"email": "fberger@code711.de"
 		}
 	],
 	"config": {
@@ -40,7 +40,7 @@
 
 	"autoload": {
 		"psr-4": {
-			"Sudhaus7\\SolrTools\\": "Classes/"
+			"Code711\\SolrTools\\": "Classes/"
 		}
 	},
 

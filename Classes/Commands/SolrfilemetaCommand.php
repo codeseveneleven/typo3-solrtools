@@ -10,7 +10,7 @@
  *
  */
 
-namespace Sudhaus7\SolrTools\Commands;
+namespace Code711\SolrTools\Commands;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
