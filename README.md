@@ -10,7 +10,7 @@
 
 This Extension provides CLI Tools to initialize the EXT:solr index queues from the command line, and to scan for file-references in the content to add the corresponding sites to the sys_file metadata where a file is being used.
 
-The tools are aimed for installations with multiple sites. They will not do anything what could not be done in the TYPO2 Backend, but might save some time, or might be usefull in certain CI/CD Situations.
+The tools are aimed for installations with multiple sites. They will not do anything what could not be done in the TYPO3 Backend, but might save some time, or might be usefull in certain CI/CD Situations.
 
 ## Changelog
 
