@@ -49,7 +49,7 @@ class SolrfilemetaCommand extends Command
                           ->update(
                               'sys_file_metadata',
                               ['enable_indexing'=>null],
-                              ['deleted'=>0]
+                              ['pid'=>0]
                           );
         }
 
