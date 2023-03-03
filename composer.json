@@ -65,6 +65,14 @@
 			"mkdir -p .Build/public/typo3conf/ext/",
 			"[ -L .Build/public/typo3conf/ext/logformatter ] || ln -snvf ../../../../. .Build/public/typo3conf/ext/logformatter; exit 0"
 		],
+		"pre-install-cmd": [
+			"@add-local-git-config"
+		],
+		"pre-update-cmd": [
+			"@add-local-git-config"
+		],
+		"add-local-git-config": "git config --local include.path ../.gitconfig",
+
 		"cmscacheflush": "@php vendor/bin/typo3cms cache:flush",
 		"csfixer": "@php vendor/bin/php-cs-fixer fix",
 		"psalm": "@php ./vendor/bin/psalm --no-cache  --show-info=true --php-version=8.1",

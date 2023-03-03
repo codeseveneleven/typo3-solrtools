@@ -12,16 +12,34 @@ This Extension provides CLI Tools to initialize the EXT:solr index queues from t
 
 The tools are aimed for installations with multiple sites. They will not do anything what could not be done in the TYPO3 Backend, but might save some time, or might be usefull in certain CI/CD Situations.
 
+Additionally, a SolrEntityInterface is available for Extbase Models to update the solr index of a record if it has been changed through extbase in the frontend (similar to EXT:slug_extbase )
+
 ## Changelog
 
-1.0.0
-- Initial release
+1.1.0
+- added `Code711\SolrTools\Interfaces\SolrEntityInterface` to enable Extbase models to update the its index when persisted through extbase
+
+1.0.2
+- added promised but missing scan for file-references in tt_content:header_link
 
 1.0.1
 - Updated TER Description
 
-1.0.2
-- added promised but missing scan for file-references in tt_content:header_link
+1.0.0
+- Initial release
+
+## `Code711\SolrTools\Interfaces\SolrEntityInterface`
+
+To enable this feature for your models simply add to the models class definition of your model, for example:
+
+```php
+
+class MyModel extends TYPO3\CMS\Extbase\DomainObject\AbstractEntity implements \Code711\SolrTools\Interfaces\SolrEntityInterface
+
+```
+
+now when persisting an object of this class, it will check if it is indexed in solr and if yes that its index will be added or updated through the normal scheduler process.
+The Interface itself has no further requirements and is only used as a marker to identify the models to watch out for.
 
 ## solr:tools:createindex
 
@@ -62,7 +80,7 @@ This will create index-tasks for the tables tx_news and sys_file_metadata in the
 
 ## solr:tools:filemeta
 
-This tool will search the file references table and the header_link and bodytext fields for files which match the given file extensions. It will then lookup the corresponding site based on the page-id associated with the record and add that site id to the enable_indexing field provided by [EXT:solr_file_indexer](https://extensions.typo3.org/extension/solr_file_indexer).
+This tool will search the file references table and the header_link and bodytext fields for files which match the given file extensions. It will then look up the corresponding site based on the page-id associated with the record and add that site id to the enable_indexing field provided by [EXT:solr_file_indexer](https://extensions.typo3.org/extension/solr_file_indexer).
 
 The tool will check if the element is visible (deleted=0, hidden=0) and if the page and its parent pages are visible, to ensure only 'active' files are added to the solr index.
 
