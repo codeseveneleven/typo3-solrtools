@@ -21,14 +21,17 @@ services:
         command: 'solr:tools:createindex'
         description: 'This tool creates (re)index tasks for solr per table and site or all sites'
         schedulable: true
+
   Code711\SolrTools\EventListeners\CreateSolrIndex:
     tags:
       - name: event.listener
-        identifier: addPersistenceObject
+        identifier: 'addPersistedObjectToSolr'
         event: TYPO3\CMS\Extbase\Event\Persistence\EntityAddedToPersistenceEvent
+
   Code711\SolrTools\EventListeners\UpdateSolrIndex:
     tags:
       - name: event.listener
-        identifier: upgradePersistenceObject
+        identifier: 'updatePersistedObjectInSolr'
         event: TYPO3\CMS\Extbase\Event\Persistence\EntityUpdatedInPersistenceEvent
+
 
