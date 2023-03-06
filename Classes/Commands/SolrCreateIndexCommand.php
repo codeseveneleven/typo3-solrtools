@@ -16,6 +16,7 @@ namespace Code711\SolrTools\Commands;
 use ApacheSolrForTypo3\Solr\ConnectionManager;
 use ApacheSolrForTypo3\Solr\Domain\Site\Site;
 use ApacheSolrForTypo3\Solr\Domain\Site\SiteRepository;
+use ApacheSolrForTypo3\Solr\IndexQueue\Initializer\Page;
 use ApacheSolrForTypo3\Solr\IndexQueue\Queue;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -79,7 +80,14 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
             /** @var ?Site $solrSite */
             $solrSite = $solrSiteFinder->getSiteByRootPageId($site->getRootPageId());
             if ($solrSite instanceof Site) {
+
+                if (empty($solrSite->getAllSolrConnectionConfigurations())) {
+                    $output->writeln( 'Skipping '.$solrSite->getTitle().' '.$solrSite->getDomain().' (no config)');
+                    continue;
+                }
+
                 $output->writeln( 'Running ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() );
+
                 if ( $input->getOption( 'cleanup' ) ) {
                     $output->writeln( 'Cleaning ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() );
                     $this->cleanUpIndex( $solrSite, $options );

@@ -20,7 +20,7 @@ Additionally, a SolrEntityInterface is available for Extbase Models to update th
 - better identifier for events
 
 1.1.0
-- added `Code711\SolrTools\Interfaces\SolrEntityInterface` to enable Extbase models to update the its index when persisted through extbase
+- added `Code711\SolrTools\Interfaces\SolrEntityInterface` to enable Extbase models to update its index when persisted through extbase
 
 1.0.2
 - added promised but missing scan for file-references in tt_content:header_link
