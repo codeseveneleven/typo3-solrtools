@@ -39,6 +39,9 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
         This will create an index-task for all sites and all pages and will clean the index first
         ./vendor/bin/typo3 solr:tools:createindex -w pages --cleanup ALL
 
+        This will create index-entried for all sites and all configured tables:
+        ./vendor/bin/typo3 solr:tools:createindex -w all all
+
         ');
 
         $this->addArgument(
@@ -47,7 +50,7 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
             'Site identifier or ALL for all sites'
         );
 
-        $this->addOption('what', 'w', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'what to index (eq pages)');
+        $this->addOption('what', 'w', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'what to index (eq pages). Add "all" to index all configured table types');
 
         $this->addOption('cleanup', 'c', InputOption::VALUE_NONE, 'clean the solr index per site');
     }
@@ -73,6 +76,11 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
 
         /** @var string[] $options */
         $options = (array)$input->getOption('what');
+
+        if (in_array('ALL',$options) || \in_array( 'all', $options)) {
+            $options = ['*'];
+        }
+
 
         $solrSiteFinder = GeneralUtility::makeInstance(SiteRepository::class);
 

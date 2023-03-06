@@ -16,6 +16,10 @@ Additionally, a SolrEntityInterface is available for Extbase Models to update th
 
 ## Changelog
 
+1.2.0
+- better handling of non-solr-configured sites
+- added possibilty to use the keyword 'all' with option -w/--what to create indexes for all configured tables in a site
+
 1.1.1
 - better identifier for events
 
@@ -59,7 +63,7 @@ Arguments:
   site                  Site identifier or ALL for all sites
 
 Options:
-  -w, --what=WHAT       what to index (eq pages) (multiple values allowed)
+  -w, --what=WHAT       what to index (eq pages) (multiple values allowed). Enter "all" to index all configured pages
   -c, --cleanup         clean the solr index per site
   -h, --help            Display help for the given command. When no command is given display help for the list command
   -q, --quiet           Do not output any message
@@ -80,6 +84,10 @@ This will create index-tasks for the table pages in all Sites and it will run cl
 This will create index-tasks for the tables tx_news and sys_file_metadata in the sites with the identifiers customer1 and customer3
 
 <pre>./vendor/bin/typo3 solr:tools:createindex -w tx_news -w sys_file_metadata customer1 customer3</pre>
+
+The following will create index tasks for all tables in all sites
+
+<pre>./vendor/bin/typo3 solr:tools:createindex -w all all</pre>
 
 ## solr:tools:filemeta
 
