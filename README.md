@@ -1,7 +1,7 @@
 # TYPO3 Solr tools
 
 [![Latest Stable Version](https://poser.pugx.org/code711/solrtools/v/stable.svg)](https://extensions.typo3.org/extension/solr_tools)
-[![TYPO3 11](https://img.shields.io/badge/TYPO3-11-orange.svg)](https://get.typo3.org/version/11)
+[![TYPO3 12](https://img.shields.io/badge/TYPO3-12-orange.svg)](https://get.typo3.org/version/12)
 [![Total Downloads](https://poser.pugx.org/code711/solrtools/d/total.svg)](https://packagist.org/packages/code711/solrtools)
 [![Monthly Downloads](https://poser.pugx.org/code711/solrtools/d/monthly)](https://packagist.org/packages/sudhaus7/logformatter)
 ![PHPSTAN:Level 9](https://img.shields.io/badge/PHPStan-level%209-brightgreen.svg?style=flat])
@@ -15,10 +15,13 @@ The tools are aimed for installations with multiple sites. They will not do anyt
 Additionally, a SolrEntityInterface is available for Extbase Models to update the solr index of a record if it has been changed through extbase in the frontend (similar to EXT:slug_extbase )
 
 ## Changelog
+2.0.0
+- Support of TYPO3 v11-v12
+- SolrfilemetaCommand.php does not set 'enable_indexing' for files on hidden pages or pages with restricted FE user access anymore
 
 1.2.0
 - better handling of non-solr-configured sites
-- added possibilty to use the keyword 'all' with option -w/--what to create indexes for all configured tables in a site
+- added possibility to use the keyword 'all' with option -w/--what to create indexes for all configured tables in a site
 
 1.1.1
 - better identifier for events
