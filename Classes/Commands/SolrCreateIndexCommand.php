@@ -13,11 +13,13 @@ declare(strict_types=1);
 
 namespace Code711\SolrTools\Commands;
 
+use Symfony\Component\Console\Command\Command;
 use ApacheSolrForTypo3\Solr\ConnectionManager;
 use ApacheSolrForTypo3\Solr\Domain\Site\Site;
 use ApacheSolrForTypo3\Solr\Domain\Site\SiteRepository;
-use ApacheSolrForTypo3\Solr\IndexQueue\Initializer\Page;
 use ApacheSolrForTypo3\Solr\IndexQueue\Queue;
+use Doctrine\DBAL\ConnectionException;
+use Doctrine\DBAL\Exception;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -26,7 +28,7 @@ use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
+class SolrCreateIndexCommand extends Command
 {
     /**
      * @inheritDoc
@@ -54,6 +56,11 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
 
         $this->addOption('cleanup', 'c', InputOption::VALUE_NONE, 'clean the solr index per site');
     }
+
+    /**
+     * @throws ConnectionException
+     * @throws Exception
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         /** @var string[] $sitesToLoad */
@@ -89,7 +96,7 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
             $solrSite = $solrSiteFinder->getSiteByRootPageId($site->getRootPageId());
             if ($solrSite instanceof Site) {
 
-                if (empty($solrSite->getAllSolrConnectionConfigurations())) {
+                if ($solrSite->getAllSolrConnectionConfigurations() === []) {
                     $output->writeln( 'Skipping '.$solrSite->getTitle().' '.$solrSite->getDomain().' (no config)');
                     continue;
                 }
@@ -115,7 +122,6 @@ class SolrCreateIndexCommand extends \Symfony\Component\Console\Command\Command
     /**
      * @param Site $site
      * @param string[] $what
-     *
      * @return bool
      */
     protected function cleanUpIndex(Site $site, array $what): bool

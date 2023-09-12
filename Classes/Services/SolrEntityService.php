@@ -4,7 +4,10 @@ namespace Code711\SolrTools\Services;
 
 use ApacheSolrForTypo3\Solr\Domain\Index\Queue\UpdateHandler\Events\RecordUpdatedEvent;
 use ApacheSolrForTypo3\Solr\System\Configuration\ExtensionConfiguration;
+use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Result;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Exception\Page\PageNotFoundException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -13,18 +16,21 @@ use TYPO3\CMS\Extbase\DomainObject\DomainObjectInterface;
 use TYPO3\CMS\Extbase\Persistence\Generic\Mapper\DataMapper;
 
 class SolrEntityService {
+    /**
+     * @throws Exception
+     */
     public function handleObject(DomainObjectInterface $object)
     {
         // get the table name
-        $tableName = GeneralUtility::makeInstance(DataMapper::class)->convertClassNameToTableName(get_class($object));
+        $tableName = GeneralUtility::makeInstance(DataMapper::class)->convertClassNameToTableName($object::class);
 
         if ($this->skipMonitoringOfTable( $tableName) || $this->skipRecordByRootlineConfiguration( $object->getPid())) {
             return;
         }
 
-        /** @var \TYPO3\CMS\Core\Database\Connection $query */
+        /** @var Connection $query */
         $query = GeneralUtility::makeInstance( ConnectionPool::class )->getConnectionForTable( $tableName );
-        /** @var \Doctrine\DBAL\Result $res */
+        /** @var Result $res */
         $fields = $query->select( [ '*' ], $tableName,
             ['uid'=>$object->getUid()]
         )->fetchAssociative();
@@ -55,7 +61,6 @@ class SolrEntityService {
     /**
      * Check if at least one page in the record's rootline is configured to exclude sub-entries from indexing
      *
-     * @param int $pid
      * @return bool
      */
     protected function skipRecordByRootlineConfiguration(int $pid): bool
@@ -64,7 +69,7 @@ class SolrEntityService {
         $rootlineUtility = GeneralUtility::makeInstance(RootlineUtility::class, $pid);
         try {
             $rootline = $rootlineUtility->get();
-        } catch (PageNotFoundException $e) {
+        } catch (PageNotFoundException) {
             return true;
         }
         foreach ($rootline as $page) {

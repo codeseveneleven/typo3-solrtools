@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Code711\SolrTools\Commands;
 
+use Doctrine\DBAL\Exception;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -35,7 +36,10 @@ class SolrfilemetaCommand extends Command
 
     }
 
-    public function run(InputInterface $input, OutputInterface $output)
+    /**
+     * @throws \Doctrine\DBAL\Exception
+     */
+    public function run(InputInterface $input, OutputInterface $output): int
     {
 
         if (!ExtensionManagementUtility::isLoaded( 'solr_file_indexer')) {
@@ -76,10 +80,8 @@ class SolrfilemetaCommand extends Command
                  */
                 $ctrl = $GLOBALS['TCA'][(string)$row['tablenames']]['ctrl'];
                 $dorun = true;
-                if (isset($ctrl['enablecolumns']['disabled'])) {
-                    if ($record[(string)$ctrl['enablecolumns']['disabled']] !== 0) {
-                        $dorun = false;
-                    }
+                if (isset($ctrl['enablecolumns']['disabled']) && $record[(string)$ctrl['enablecolumns']['disabled']] !== 0) {
+                    $dorun = false;
                 }
                 if ($dorun) {
                     $this->runForFile((int)$row['uid_local'], (int)$row['pid'], $output,$extensions );
@@ -139,81 +141,109 @@ class SolrfilemetaCommand extends Command
      * @param string[] $extensions
      *
      * @return void
-     * @throws \Doctrine\DBAL\Driver\Exception
+     * @throws \Doctrine\DBAL\Exception
      */
     private function runForFile(int $fileid, int $pid, OutputInterface $output, array $extensions): void
     {
-        if($sys_file = BackendUtility::getRecord('sys_file', $fileid)) {
+        if ($this->pageIsNotAccessible($pid)) {
+            return;
+        }
+        if (($sys_file = BackendUtility::getRecord('sys_file', $fileid)) && \in_array( $sys_file['extension'], $extensions )) {
+            $output->writeln( sprintf('testing file %s', (string)$sys_file['identifier']), OutputInterface::VERBOSITY_VERBOSE );
+            $rl        = BackendUtility::BEgetRootLine( $pid );
+            $rootfound = false;
+            /** @var array<string,string|int> $p */
+            foreach ( $rl as $p ) {
 
-            if ( \in_array( $sys_file['extension'], $extensions ) ) {
-                $output->writeln( sprintf('testing file %s', (string)$sys_file['identifier']), OutputInterface::VERBOSITY_VERBOSE );
-                $rl        = BackendUtility::BEgetRootLine( $pid );
-                $rootfound = false;
-                /** @var array<string,string|int> $p */
-                foreach ( $rl as $p ) {
-
-                    if ( $rootfound ) {
-                        continue;
-                    }
-                    if ( (int) $p['hidden'] !== 0 ) {
-                        $output->writeln( sprintf('hidden page in root - skipping file %s', (string)$sys_file['identifier']),
-                            OutputInterface::VERBOSITY_VERBOSE );
-
-                        return;
-                    }
-                    if ( $p['is_siteroot'] > 0 ) {
-                        $rootfound = true;
-                    }
+                if ( $rootfound ) {
+                    continue;
                 }
-
-                if ( ! $rootfound ) {
-                    $output->writeln(sprintf('no root connection - skipping file %s' , (string)$sys_file['identifier']),
+                if ( (int) $p['hidden'] !== 0 ) {
+                    $output->writeln( sprintf('hidden page in root - skipping file %s', (string)$sys_file['identifier']),
                         OutputInterface::VERBOSITY_VERBOSE );
 
                     return;
                 }
+                if ( $p['is_siteroot'] > 0 ) {
+                    $rootfound = true;
+                }
+            }
+            if ( ! $rootfound ) {
+                $output->writeln(sprintf('no root connection - skipping file %s' , (string)$sys_file['identifier']),
+                    OutputInterface::VERBOSITY_VERBOSE );
 
-                $query = GeneralUtility::makeInstance( ConnectionPool::class )
-                                       ->getConnectionForTable( 'sys_file_metadata' );
-                $res = $query->select(
-                    [ '*' ],
-                    'sys_file_metadata',
-                    [ 'file' => $fileid ]
-                );
+                return;
+            }
+            $query = GeneralUtility::makeInstance( ConnectionPool::class )
+                                   ->getConnectionForTable( 'sys_file_metadata' );
+            $res = $query->select(
+                [ '*' ],
+                'sys_file_metadata',
+                [ 'file' => $fileid ]
+            );
+            if ( $sys_file_meta = $res->fetchAssociative() ) {
+                /** @var array<string,int|string> $sys_file_meta */
+                try {
+                    $site = GeneralUtility::makeInstance( SiteFinder::class )->getSiteByPageId( $pid );
 
-
-
-                if ( $sys_file_meta = $res->fetchAssociative() ) {
-                    /** @var array<string,int|string> $sys_file_meta */
-                    try {
-                        $site = GeneralUtility::makeInstance( SiteFinder::class )->getSiteByPageId( $pid );
-
-                        $indexing = GeneralUtility::intExplode( ',', (string)$sys_file_meta['enable_indexing'] );
-                        if ( count( $indexing ) === 1 && $indexing[0] === 0 ) {
-                            $indexing = [];
-                        }
-                        if ( $site->getRootPageId() > 0 && ! \in_array( $site->getRootPageId(), $indexing ) ) {
-                            $indexing[] = $site->getRootPageId();
-                            GeneralUtility::makeInstance( ConnectionPool::class )
-                                          ->getConnectionForTable( 'sys_file_metadata' )
-                                          ->update(
-                                              'sys_file_metadata',
-                                              [ 'enable_indexing' => implode( ',', $indexing ) ],
-                                              [ 'uid' => $sys_file_meta['uid'] ],
-                                          );
-                            $output->writeln(
-                                sprintf('Added %s to Site %s meta id %d sites %s',
-                                    (string)$sys_file['identifier'],
-                                    $site->getIdentifier(),
-                                    $sys_file_meta['uid'],
-                                    implode(',',$indexing)
-                                ));
-                        }
-                    } catch ( SiteNotFoundException $e ) {
-                        $output->writeln( $e->getMessage() );
+                    $indexing = GeneralUtility::intExplode( ',', (string)$sys_file_meta['enable_indexing'] );
+                    if ( (is_countable($indexing) ? count( $indexing ) : 0) === 1 && $indexing[0] === 0 ) {
+                        $indexing = [];
                     }
+                    if ( $site->getRootPageId() > 0 && ! \in_array( $site->getRootPageId(), $indexing ) ) {
+                        $indexing[] = $site->getRootPageId();
+                        GeneralUtility::makeInstance( ConnectionPool::class )
+                                      ->getConnectionForTable( 'sys_file_metadata' )
+                                      ->update(
+                                          'sys_file_metadata',
+                                          [ 'enable_indexing' => implode( ',', $indexing ) ],
+                                          [ 'uid' => $sys_file_meta['uid'] ],
+                                      );
+                        $output->writeln(
+                            sprintf('Added %s to Site %s meta id %d sites %s',
+                                (string)$sys_file['identifier'],
+                                $site->getIdentifier(),
+                                $sys_file_meta['uid'],
+                                implode(',',$indexing)
+                            ));
+                    }
+                } catch ( SiteNotFoundException $e ) {
+                    $output->writeln( $e->getMessage() );
                 }
             }
         }
+    }
+
+    /**
+     * @throws Exception
+     * int $pid
+     * int $count
+     */
+    protected function pageIsNotAccessible(int $pid, int $count = 0): bool
+    {
+        $query = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('pages');
+        $stmt = $query->select('*')
+            ->from('pages')
+            ->where(
+                $query->expr()->eq('uid', $query->createNamedParameter($pid)),
+                $query->expr()->eq('deleted', 0),
+                $query->expr()->eq('hidden', 0)
+            )
+            ->executeQuery();
+        $page = $stmt->fetchAssociative();
+        if (empty($page)) {
+            return true;
+        }
+        if ((int)$page['fe_group'] == -2 || (int)$page['fe_group'] > 0) {
+            return true;
+        }
+        if (empty($page['pid'])) {
+            return false;
+        }
+        if ($count > 5) {
+            return true;
+        }
+        $count++;
+        return $this->pageIsNotAccessible((int)$page['pid'], $count);
     }
 }
