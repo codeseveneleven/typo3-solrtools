@@ -15,6 +15,10 @@ The tools are aimed for installations with multiple sites. They will not do anyt
 Additionally, a SolrEntityInterface is available for Extbase Models to update the solr index of a record if it has been changed through extbase in the frontend (similar to EXT:slug_extbase )
 
 ## Changelog
+2.0.1
+- Support of TYPO3 v11-v12
+- SolrfilemetaCommand.php does not set 'enable_indexing' for files on hidden pages or pages with restricted FE user access anymore
+
 2.0.0
 - Support of TYPO3 v11-v12
 - SolrfilemetaCommand.php does not set 'enable_indexing' for files on hidden pages or pages with restricted FE user access anymore
