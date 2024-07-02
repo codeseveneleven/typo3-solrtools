@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Code711\SolrTools\Commands;
 
+use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
 use ApacheSolrForTypo3\Solr\ConnectionManager;
 use ApacheSolrForTypo3\Solr\Domain\Site\Site;
@@ -27,6 +28,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use function in_array;
 
 class SolrCreateIndexCommand extends Command
 {
@@ -84,7 +86,7 @@ class SolrCreateIndexCommand extends Command
         /** @var string[] $options */
         $options = (array)$input->getOption('what');
 
-        if (in_array('ALL',$options) || \in_array( 'all', $options)) {
+        if (in_array('ALL',$options) || in_array( 'all', $options)) {
             $options = ['*'];
         }
 
@@ -92,8 +94,14 @@ class SolrCreateIndexCommand extends Command
         $solrSiteFinder = GeneralUtility::makeInstance(SiteRepository::class);
 
         foreach ($sites as $site) {
-            /** @var ?Site $solrSite */
-            $solrSite = $solrSiteFinder->getSiteByRootPageId($site->getRootPageId());
+
+			try {
+				/** @var ?Site $solrSite */
+				$solrSite = $solrSiteFinder->getSiteByRootPageId( $site->getRootPageId() );
+			} catch ( InvalidArgumentException $e) {
+				$output->writeln( 'Skipping '.$solrSite->getTitle().' '.$solrSite->getDomain().' (no site)');
+				continue;
+			}
             if ($solrSite instanceof Site) {
 
                 if ($solrSite->getAllSolrConnectionConfigurations() === []) {
