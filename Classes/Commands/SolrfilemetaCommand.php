@@ -1,14 +1,16 @@
 <?php
+
 declare(strict_types=1);
 
 /*
  * This file is part of the TYPO3 project.
- * (c) 2022 B-Factor GmbH
+ *
+ * @author Frank Berger <fberger@code711.de>
  *
  * For the full copyright and license information, please view
  * the LICENSE file that was distributed with this source code.
- * The TYPO3 project - inspiring people to share!
  *
+ * The TYPO3 project - inspiring people to share!
  */
 
 namespace Code711\SolrTools\Commands;
@@ -33,7 +35,6 @@ class SolrfilemetaCommand extends Command
         ');
         $this->addOption('ext', null, InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, 'File extensions to allow', ['doc', 'docx', 'pdf']);
         $this->addOption('cleanup', 'c', InputOption::VALUE_NONE, 'clean the site field in all meta data');
-
     }
 
     /**
@@ -41,19 +42,18 @@ class SolrfilemetaCommand extends Command
      */
     public function run(InputInterface $input, OutputInterface $output): int
     {
-
-        if (!ExtensionManagementUtility::isLoaded( 'solr_file_indexer')) {
-            $output->writeln( 'solr_file_indexer needs to be installed!',OutputInterface::VERBOSITY_QUIET);
+        if (!ExtensionManagementUtility::isLoaded('solr_file_indexer')) {
+            $output->writeln('solr_file_indexer needs to be installed!', OutputInterface::VERBOSITY_QUIET);
             exit;
         }
 
-        if ($input->getOption( 'cleanup')) {
-            $output->writeln( 'Cleaning the metadata from all sites');
-            GeneralUtility::makeInstance( ConnectionPool::class )->getConnectionForTable( 'sys_file_metadata' )
+        if ($input->getOption('cleanup')) {
+            $output->writeln('Cleaning the metadata from all sites');
+            GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('sys_file_metadata')
                           ->update(
                               'sys_file_metadata',
-                              ['enable_indexing'=>null],
-                              ['pid'=>0]
+                              ['enable_indexing' => null],
+                              ['pid' => 0]
                           );
         }
 
@@ -65,7 +65,6 @@ class SolrfilemetaCommand extends Command
                           $query->expr()->eq('deleted', 0),
                       )
                       ->executeQuery();
-
 
         /** @var string[] $extensions */
         $extensions = $input->getOption('ext');
@@ -84,7 +83,7 @@ class SolrfilemetaCommand extends Command
                     $dorun = false;
                 }
                 if ($dorun) {
-                    $this->runForFile((int)$row['uid_local'], (int)$row['pid'], $output,$extensions );
+                    $this->runForFile((int)$row['uid_local'], (int)$row['pid'], $output, $extensions);
                 }
             }
         }
@@ -140,7 +139,6 @@ class SolrfilemetaCommand extends Command
      * @param OutputInterface $output
      * @param string[] $extensions
      *
-     * @return void
      * @throws \Doctrine\DBAL\Exception
      */
     private function runForFile(int $fileid, int $pid, OutputInterface $output, array $extensions): void
@@ -148,67 +146,72 @@ class SolrfilemetaCommand extends Command
         if ($this->pageIsNotAccessible($pid)) {
             return;
         }
-        if (($sys_file = BackendUtility::getRecord('sys_file', $fileid)) && \in_array( $sys_file['extension'], $extensions )) {
-            $output->writeln( sprintf('testing file %s', (string)$sys_file['identifier']), OutputInterface::VERBOSITY_VERBOSE );
-            $rl        = BackendUtility::BEgetRootLine( $pid );
+        if (($sys_file = BackendUtility::getRecord('sys_file', $fileid)) && \in_array($sys_file['extension'], $extensions)) {
+            $output->writeln(sprintf('testing file %s', (string)$sys_file['identifier']), OutputInterface::VERBOSITY_VERBOSE);
+            $rl        = BackendUtility::BEgetRootLine($pid);
             $rootfound = false;
             /** @var array<string,string|int> $p */
-            foreach ( $rl as $p ) {
-
-                if ( $rootfound ) {
+            foreach ($rl as $p) {
+                if ($rootfound) {
                     continue;
                 }
-                if ( (int) $p['hidden'] !== 0 ) {
-                    $output->writeln( sprintf('hidden page in root - skipping file %s', (string)$sys_file['identifier']),
-                        OutputInterface::VERBOSITY_VERBOSE );
+                if ((int)$p['hidden'] !== 0) {
+                    $output->writeln(
+                        sprintf('hidden page in root - skipping file %s', (string)$sys_file['identifier']),
+                        OutputInterface::VERBOSITY_VERBOSE
+                    );
 
                     return;
                 }
-                if ( $p['is_siteroot'] > 0 ) {
+                if ($p['is_siteroot'] > 0) {
                     $rootfound = true;
                 }
             }
-            if ( ! $rootfound ) {
-                $output->writeln(sprintf('no root connection - skipping file %s' , (string)$sys_file['identifier']),
-                    OutputInterface::VERBOSITY_VERBOSE );
+            if (! $rootfound) {
+                $output->writeln(
+                    sprintf('no root connection - skipping file %s', (string)$sys_file['identifier']),
+                    OutputInterface::VERBOSITY_VERBOSE
+                );
 
                 return;
             }
-            $query = GeneralUtility::makeInstance( ConnectionPool::class )
-                                   ->getConnectionForTable( 'sys_file_metadata' );
+            $query = GeneralUtility::makeInstance(ConnectionPool::class)
+                                   ->getConnectionForTable('sys_file_metadata');
             $res = $query->select(
                 [ '*' ],
                 'sys_file_metadata',
                 [ 'file' => $fileid ]
             );
-            if ( $sys_file_meta = $res->fetchAssociative() ) {
+            if ($sys_file_meta = $res->fetchAssociative()) {
                 /** @var array<string,int|string> $sys_file_meta */
                 try {
-                    $site = GeneralUtility::makeInstance( SiteFinder::class )->getSiteByPageId( $pid );
+                    $site = GeneralUtility::makeInstance(SiteFinder::class)->getSiteByPageId($pid);
 
-                    $indexing = GeneralUtility::intExplode( ',', (string)$sys_file_meta['enable_indexing'] );
-                    if ( (is_countable($indexing) ? count( $indexing ) : 0) === 1 && $indexing[0] === 0 ) {
+                    $indexing = GeneralUtility::intExplode(',', (string)$sys_file_meta['enable_indexing']);
+                    if ((is_countable($indexing) ? count($indexing) : 0) === 1 && $indexing[0] === 0) {
                         $indexing = [];
                     }
-                    if ( $site->getRootPageId() > 0 && ! \in_array( $site->getRootPageId(), $indexing ) ) {
+                    if ($site->getRootPageId() > 0 && ! \in_array($site->getRootPageId(), $indexing)) {
                         $indexing[] = $site->getRootPageId();
-                        GeneralUtility::makeInstance( ConnectionPool::class )
-                                      ->getConnectionForTable( 'sys_file_metadata' )
+                        GeneralUtility::makeInstance(ConnectionPool::class)
+                                      ->getConnectionForTable('sys_file_metadata')
                                       ->update(
                                           'sys_file_metadata',
-                                          [ 'enable_indexing' => implode( ',', $indexing ) ],
+                                          [ 'enable_indexing' => implode(',', $indexing) ],
                                           [ 'uid' => $sys_file_meta['uid'] ],
                                       );
                         $output->writeln(
-                            sprintf('Added %s to Site %s meta id %d sites %s',
+                            sprintf(
+                                'Added %s to Site %s meta id %d sites %s',
                                 (string)$sys_file['identifier'],
                                 $site->getIdentifier(),
                                 $sys_file_meta['uid'],
-                                implode(',',$indexing)
-                            ));
+                                implode(',', $indexing)
+                            )
+                        );
                     }
-                } catch ( SiteNotFoundException $e ) {
-                    $output->writeln( $e->getMessage() );
+                } catch (SiteNotFoundException $e) {
+                    $output->writeln($e->getMessage());
                 }
             }
         }

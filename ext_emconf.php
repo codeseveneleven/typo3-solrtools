@@ -2,12 +2,13 @@
 
 /*
  * This file is part of the TYPO3 project.
- * (c) 2022 B-Factor GmbH
+ *
+ * @author Frank Berger <fberger@code711.de>
  *
  * For the full copyright and license information, please view
  * the LICENSE file that was distributed with this source code.
- * The TYPO3 project - inspiring people to share!
  *
+ * The TYPO3 project - inspiring people to share!
  */
 
 $EM_CONF['solr_tools'] = [
@@ -15,7 +16,7 @@ $EM_CONF['solr_tools'] = [
     'description' => 'This Extension provides CLI Tools to initialize the EXT:solr index queues from the command line, and to scan for file-references in the content to add the corresponding sites to the sys_file metadata where a file is being used.
     Additionally a SolrEntityInterface is available for Extbase Models to update the solr index of a record if it has been changed through extbase in the frontend (similar to EXT:slug_extbase )',
     'category' => 'plugin',
-    'version' => '2.0.7',
+    'version' => '2.0.8',
     'state' => 'stable',
     'author' => 'Frank Berger',
     'author_email' => 'fberger@code711.de',

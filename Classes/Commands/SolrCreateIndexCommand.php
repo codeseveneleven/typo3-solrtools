@@ -1,26 +1,31 @@
 <?php
+
 declare(strict_types=1);
 
 /*
  * This file is part of the TYPO3 project.
- * (c) 2022 B-Factor GmbH
+ *
+ * @author Frank Berger <fberger@code711.de>
  *
  * For the full copyright and license information, please view
  * the LICENSE file that was distributed with this source code.
- * The TYPO3 project - inspiring people to share!
  *
+ * The TYPO3 project - inspiring people to share!
  */
 
 namespace Code711\SolrTools\Commands;
 
-use InvalidArgumentException;
-use Symfony\Component\Console\Command\Command;
 use ApacheSolrForTypo3\Solr\ConnectionManager;
 use ApacheSolrForTypo3\Solr\Domain\Site\Site;
 use ApacheSolrForTypo3\Solr\Domain\Site\SiteRepository;
 use ApacheSolrForTypo3\Solr\IndexQueue\Queue;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\Exception;
+
+use function in_array;
+
+use InvalidArgumentException;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -28,7 +33,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use function in_array;
 
 class SolrCreateIndexCommand extends Command
 {
@@ -75,52 +79,48 @@ class SolrCreateIndexCommand extends Command
             $sites = [];
             foreach ($sitesToLoad as $key) {
                 try {
-                    $sites[] = $siteFinder->getSiteByIdentifier( $key );
-                } catch ( SiteNotFoundException $e ) {
-                    $output->writeln( $e->getMessage() );
+                    $sites[] = $siteFinder->getSiteByIdentifier($key);
+                } catch (SiteNotFoundException $e) {
+                    $output->writeln($e->getMessage());
                 }
-
             }
         }
 
         /** @var string[] $options */
         $options = (array)$input->getOption('what');
 
-        if (in_array('ALL',$options) || in_array( 'all', $options)) {
+        if (in_array('ALL', $options) || in_array('all', $options)) {
             $options = ['*'];
         }
-
 
         $solrSiteFinder = GeneralUtility::makeInstance(SiteRepository::class);
 
         foreach ($sites as $site) {
-
-			try {
-				/** @var ?Site $solrSite */
-				$solrSite = $solrSiteFinder->getSiteByRootPageId( $site->getRootPageId() );
-			} catch ( InvalidArgumentException $e) {
-				$output->writeln( 'Skipping '.$solrSite->getTitle().' '.$solrSite->getDomain().' (no site)');
-				continue;
-			}
+            try {
+                /** @var ?Site $solrSite */
+                $solrSite = $solrSiteFinder->getSiteByRootPageId($site->getRootPageId());
+            } catch (InvalidArgumentException $e) {
+                $output->writeln('Skipping ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() . ' (no site)');
+                continue;
+            }
             if ($solrSite instanceof Site) {
-
                 if ($solrSite->getAllSolrConnectionConfigurations() === []) {
-                    $output->writeln( 'Skipping '.$solrSite->getTitle().' '.$solrSite->getDomain().' (no config)');
+                    $output->writeln('Skipping ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() . ' (no config)');
                     continue;
                 }
 
-                $output->writeln( 'Running ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() );
+                $output->writeln('Running ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain());
 
-                if ( $input->getOption( 'cleanup' ) ) {
-                    $output->writeln( 'Cleaning ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() );
-                    $this->cleanUpIndex( $solrSite, $options );
+                if ($input->getOption('cleanup')) {
+                    $output->writeln('Cleaning ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain());
+                    $this->cleanUpIndex($solrSite, $options);
                 }
                 // initialize for re-indexing
                 /* @var Queue $indexQueue */
-                $indexQueue                      = GeneralUtility::makeInstance( Queue::class );
+                $indexQueue                      = GeneralUtility::makeInstance(Queue::class);
 
                 $indexQueue->getInitializationService()
-                           ->initializeBySiteAndIndexConfigurations( $solrSite, $options );
+                           ->initializeBySiteAndIndexConfigurations($solrSite, $options);
             }
         }
 

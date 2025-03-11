@@ -1,6 +1,17 @@
 <?php
-declare( strict_types=1 );
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the TYPO3 project.
+ *
+ * @author Frank Berger <fberger@code711.de>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
 
 namespace Code711\SolrTools\Commands;
 
@@ -14,14 +25,12 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Sudhaus7\Logformatter\Logger\ConsoleLogger;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-
 
 class IndexQueueWorkerCommand extends Command
 {
@@ -36,8 +45,7 @@ class IndexQueueWorkerCommand extends Command
 
         ');
 
-
-        $this->addOption('sites', null, InputOption::VALUE_REQUIRED , 'how many sites to run per run', 5);
+        $this->addOption('sites', null, InputOption::VALUE_REQUIRED, 'how many sites to run per run', 5);
 
         $this->addOption('documents', null, InputOption::VALUE_REQUIRED, 'how many documents to run per site', 25);
     }
@@ -50,7 +58,7 @@ class IndexQueueWorkerCommand extends Command
     {
         $logger = new NullLogger();
         if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
-            $logger = new ConsoleLogger( $output);
+            $logger = new ConsoleLogger($output);
         }
         $GLOBALS['CLILOGGER'] = $logger;
 
@@ -58,25 +66,21 @@ class IndexQueueWorkerCommand extends Command
         $cliEnvironment->backup();
         $cliEnvironment->initialize(Environment::getPublicPath() . '/');
 
-        $availableSites = $this->getAvailableSites((int)$input->getOption('sites'),$logger);
+        $availableSites = $this->getAvailableSites((int)$input->getOption('sites'), $logger);
         foreach ($availableSites as $availableSite) {
-
-            $logger->info('running indexer on '.$availableSite->getTitle().' '.$availableSite->getDomain().' '.$availableSite->getRootPageId());
+            $logger->info('running indexer on ' . $availableSite->getTitle() . ' ' . $availableSite->getDomain() . ' ' . $availableSite->getRootPageId());
             try {
                 $indexService = GeneralUtility::makeInstance(IndexService::class, $availableSite);
-                $indexService->setLogger($logger);
-                $indexService->indexItems((int)$input->getOption( 'documents'));
+                $indexService->setRealLogger($logger);
+                $indexService->indexItems((int)$input->getOption('documents'));
             } catch (\Exception $e) {
-                $logger->error( $e->getMessage(), ['code'=>$e->getCode(),'root'=>$availableSite->getRootPageId()]);
+                $logger->error($e->getMessage(), ['code' => $e->getCode(), 'root' => $availableSite->getRootPageId()]);
                 continue;
             }
-
         }
         $cliEnvironment->restore();
         return 0;
     }
-
-
 
     /**
      * Gets all available TYPO3 sites with Solr configured.
@@ -89,30 +93,29 @@ class IndexQueueWorkerCommand extends Command
     {
         $repository = GeneralUtility::makeInstance(SiteRepository::class);
 
-        $query = GeneralUtility::makeInstance( ConnectionPool::class )->getQueryBuilderForTable( 'tx_solr_indexqueue_item' );
-        $stmt  = $query->select( 'root' )
-                       ->from( 'tx_solr_indexqueue_item' )
+        $query = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('tx_solr_indexqueue_item');
+        $stmt  = $query->select('root')
+                       ->from('tx_solr_indexqueue_item')
                        ->where(
-                           $query->expr()->gt('changed','indexed'),
-                           $query->expr()->lte('changed',time()),
-                           $query->expr()->notLike('errors', $query->createNamedParameter(''))
+                           $query->expr()->gt('changed', 'indexed'),
+                           $query->expr()->lte('changed', time()),
+                           $query->expr()->like('errors', $query->createNamedParameter(''))
                        )
-                       ->groupBy( 'root' )
-                       ->orderBy('changed','ASC')
-                       ->setMaxResults( $maxResults)
+                       ->groupBy('root')
+                       ->orderBy('changed', 'ASC')
+                       ->setMaxResults($maxResults)
                        ->executeQuery();
 
-
         $result = [];
-        while($row = $stmt->fetchAssociative()) {
+        while ($row = $stmt->fetchAssociative()) {
             try {
-                $site = $repository->getSiteByRootPageId( $row['root'] );
+                $site = $repository->getSiteByRootPageId($row['root']);
                 if ($site instanceof Site) {
-                    $logger->debug( 'found Site '.$site->getRootPageId().' '.$row['root'].' '.$site->getDomain());
+                    $logger->debug('found Site ' . $site->getRootPageId() . ' ' . $row['root'] . ' ' . $site->getDomain());
                     $result[] = $site;
                 }
             } catch (\Exception $e) {
-                $logger->error( $e->getMessage(), ['code'=>$e->getCode(),'root'=>$row['root']]);
+                $logger->error($e->getMessage(), ['code' => $e->getCode(), 'root' => $row['root']]);
             }
         }
 

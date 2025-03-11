@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of the TYPO3 project.
+ *
+ * @author Frank Berger <fberger@code711.de>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
 namespace Code711\SolrTools\Services;
 
 use ApacheSolrForTypo3\Solr\Domain\Index\Queue\UpdateHandler\Events\RecordUpdatedEvent;
@@ -15,7 +26,8 @@ use TYPO3\CMS\Core\Utility\RootlineUtility;
 use TYPO3\CMS\Extbase\DomainObject\DomainObjectInterface;
 use TYPO3\CMS\Extbase\Persistence\Generic\Mapper\DataMapper;
 
-class SolrEntityService {
+class SolrEntityService
+{
     /**
      * @throws Exception
      */
@@ -24,15 +36,17 @@ class SolrEntityService {
         // get the table name
         $tableName = GeneralUtility::makeInstance(DataMapper::class)->convertClassNameToTableName($object::class);
 
-        if ($this->skipMonitoringOfTable( $tableName) || $this->skipRecordByRootlineConfiguration( $object->getPid())) {
+        if ($this->skipMonitoringOfTable($tableName) || $this->skipRecordByRootlineConfiguration($object->getPid())) {
             return;
         }
 
         /** @var Connection $query */
-        $query = GeneralUtility::makeInstance( ConnectionPool::class )->getConnectionForTable( $tableName );
+        $query = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($tableName);
         /** @var Result $res */
-        $fields = $query->select( [ '*' ], $tableName,
-            ['uid'=>$object->getUid()]
+        $fields = $query->select(
+            [ '*' ],
+            $tableName,
+            ['uid' => $object->getUid()]
         )->fetchAssociative();
 
         $eventDispatcher =  GeneralUtility::makeInstance(EventDispatcherInterface::class);
