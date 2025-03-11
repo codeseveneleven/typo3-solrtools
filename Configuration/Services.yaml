@@ -22,7 +22,7 @@ services:
         description: 'This tool creates (re)index tasks for solr per table and site or all sites'
         schedulable: true
 
-  Code711\SolrTools\EventListeners\IndexQueueWorkerCommand:
+  Code711\SolrTools\Commands\IndexQueueWorkerCommand:
     tags:
       - name: console.command
         command: 'solr:tools:indexqueueworker'
