@@ -4,11 +4,10 @@ declare( strict_types=1 );
 
 namespace Code711\SolrTools\Commands;
 
-use ApacheSolrForTypo3\Solr\Domain\Index\IndexService;
 use ApacheSolrForTypo3\Solr\Domain\Site\Site;
 use ApacheSolrForTypo3\Solr\Domain\Site\SiteRepository;
 use ApacheSolrForTypo3\Solr\System\Environment\CliEnvironment;
-use ApacheSolrForTypo3\Solr\System\Logging\SolrLogManager;
+use Code711\SolrTools\Domain\Index\IndexService;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -50,11 +49,10 @@ class IndexQueueWorkerCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $logger = new NullLogger();
-        $solrLogger = GeneralUtility::makeInstance(SolrLogManager::class);
         if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
             $logger = new ConsoleLogger( $output);
-            $solrLogger->setLogger($logger);
         }
+        $GLOBALS['CLILOGGER'] = $logger;
 
         $cliEnvironment = GeneralUtility::makeInstance(CliEnvironment::class);
         $cliEnvironment->backup();
@@ -65,8 +63,9 @@ class IndexQueueWorkerCommand extends Command
 
             $logger->info('running indexer on '.$availableSite->getTitle().' '.$availableSite->getDomain().' '.$availableSite->getRootPageId());
             try {
-                $indexService = GeneralUtility::makeInstance(IndexService::class, $availableSite, null, null, $solrLogger);
-                 $indexService->indexItems((int)$input->getOption( 'documents'));
+                $indexService = GeneralUtility::makeInstance(IndexService::class, $availableSite);
+                $indexService->setLogger($logger);
+                $indexService->indexItems((int)$input->getOption( 'documents'));
             } catch (\Exception $e) {
                 $logger->error( $e->getMessage(), ['code'=>$e->getCode(),'root'=>$availableSite->getRootPageId()]);
                 continue;

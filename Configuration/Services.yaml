@@ -1,12 +1,13 @@
 services:
   _defaults:
-    autowire: false
+    autowire: true
     autoconfigure: true
     public: false
 
   Code711\SolrTools\:
     resource: '../Classes/*'
-
+    exclude:
+      - '../Classes/Domain/Model/*'
 
   Code711\SolrTools\Commands\SolrfilemetaCommand:
     tags:
@@ -40,6 +41,11 @@ services:
       - name: event.listener
         identifier: 'updatePersistedObjectInSolr'
         event: TYPO3\CMS\Extbase\Event\Persistence\EntityUpdatedInPersistenceEvent
+
+  Code711\SolrTools\EventListeners\AfterItemHasBeenIndexedEventListener:
+    tags:
+      - name: event.listener
+        identifier: 'solrtools:AfterItemHasBeenIndexedEventListener'
 
 
 
