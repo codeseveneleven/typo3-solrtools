@@ -34,6 +34,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class IndexQueueWorkerCommand extends Command
 {
+
+    protected bool $purgeInvalidSites = false;
+
     /**
      * @inheritDoc
      */
@@ -48,6 +51,8 @@ class IndexQueueWorkerCommand extends Command
         $this->addOption('sites', null, InputOption::VALUE_REQUIRED, 'how many sites to run per run', 5);
 
         $this->addOption('documents', null, InputOption::VALUE_REQUIRED, 'how many documents to run per site', 25);
+
+        $this->addOption('purgeinvalidsites', null,InputOption::VALUE_NONE, 'Purge Invalid Sites');
     }
 
     /**
@@ -56,6 +61,10 @@ class IndexQueueWorkerCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        if ($input->getOption('purgeinvalidsites')) {
+            $this->purgeInvalidSites = true;
+        }
+
         $logger = new NullLogger();
         if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
             $logger = new ConsoleLogger($output);
@@ -113,6 +122,16 @@ class IndexQueueWorkerCommand extends Command
                 if ($site instanceof Site) {
                     $logger->debug('found Site ' . $site->getRootPageId() . ' ' . $row['root'] . ' ' . $site->getDomain());
                     $result[] = $site;
+                } else {
+                    if ($this->purgeInvalidSites) {
+                        $logger->info( 'Site ' . $row['root'] . ' not found - deleting from queue' );
+                        GeneralUtility::makeInstance( ConnectionPool::class )
+                                      ->getConnectionForTable( 'tx_solr_indexqueue_item' )
+                                      ->delete(
+                                          'tx_solr_indexqueue_item',
+                                          [ 'root' => $row['root'] ]
+                                      );
+                    }
                 }
             } catch (\Exception $e) {
                 $logger->error($e->getMessage(), ['code' => $e->getCode(), 'root' => $row['root']]);
