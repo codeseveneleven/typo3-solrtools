@@ -1,6 +1,7 @@
 # TYPO3 Solr tools
 
 [![Latest Stable Version](https://poser.pugx.org/code711/solrtools/v/stable.svg)](https://extensions.typo3.org/extension/solr_tools)
+[![TYPO3 11](https://img.shields.io/badge/TYPO3-11-orange.svg)](https://get.typo3.org/version/11)
 [![TYPO3 12](https://img.shields.io/badge/TYPO3-12-orange.svg)](https://get.typo3.org/version/12)
 [![Total Downloads](https://poser.pugx.org/code711/solrtools/d/total.svg)](https://packagist.org/packages/code711/solrtools)
 [![Monthly Downloads](https://poser.pugx.org/code711/solrtools/d/monthly)](https://packagist.org/packages/sudhaus7/logformatter)
