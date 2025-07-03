@@ -102,6 +102,10 @@ class SolrCreateIndexCommand extends Command
             } catch (InvalidArgumentException $e) {
                 $output->writeln('Skipping ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() . ' (no site)');
                 continue;
+            } catch (\Exception $e) {
+                $output->writeln("\n\r" . 'Skipping site with identifier ' . $site->getIdentifier() . '.');
+                $output->writeln('ERROR: ' . $e->getMessage() . "\n\r");
+                continue;
             }
             if ($solrSite instanceof Site) {
                 if ($solrSite->getAllSolrConnectionConfigurations() === []) {
