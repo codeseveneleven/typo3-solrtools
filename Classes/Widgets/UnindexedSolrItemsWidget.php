@@ -24,7 +24,6 @@ use TYPO3\CMS\Dashboard\Widgets\WidgetInterface;
 
 class UnindexedSolrItemsWidget implements WidgetInterface, RequestAwareWidgetInterface
 {
-
     private ServerRequestInterface $request;
     public function setRequest(ServerRequestInterface $request): void
     {
@@ -58,7 +57,8 @@ class UnindexedSolrItemsWidget implements WidgetInterface, RequestAwareWidgetInt
             ->addSelectLiteral('COUNT(*) as count')
             ->from('tx_solr_indexqueue_item')
             ->where(
-                $queryBuilder->expr()->gt('changed', $queryBuilder->quoteIdentifier('indexed'))
+                $queryBuilder->expr()->gt('changed', $queryBuilder->quoteIdentifier('indexed')),
+                $queryBuilder->expr()->notLike('errors', $queryBuilder->createNamedParameter('%:%')),
             )
             ->groupBy('indexing_configuration')
             ->orderBy('count', 'DESC')
