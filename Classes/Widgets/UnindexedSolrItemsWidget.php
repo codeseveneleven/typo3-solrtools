@@ -15,30 +15,38 @@ declare(strict_types=1);
 
 namespace Code711\SolrTools\Widgets;
 
+use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Backend\View\BackendViewFactory;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Dashboard\Widgets\RequestAwareWidgetInterface;
 use TYPO3\CMS\Dashboard\Widgets\WidgetConfigurationInterface;
 use TYPO3\CMS\Dashboard\Widgets\WidgetInterface;
-use TYPO3\CMS\Fluid\View\StandaloneView;
 
-class UnindexedSolrItemsWidget implements WidgetInterface
+class UnindexedSolrItemsWidget implements WidgetInterface, RequestAwareWidgetInterface
 {
+
+    private ServerRequestInterface $request;
+    public function setRequest(ServerRequestInterface $request): void
+    {
+        $this->request = $request;
+    }
     public function __construct(
         private readonly WidgetConfigurationInterface $configuration,
         private readonly ConnectionPool $connectionPool,
-        private readonly StandaloneView $view,
+        private readonly BackendViewFactory $backendViewFactory,
         private readonly array $options = []
     ) {}
 
     public function renderWidgetContent(): string
     {
-        $this->view->setTemplate('Widget/UnindexedSolrItems');
-        $this->view->assignMultiple([
+        $view = $this->backendViewFactory->create($this->request);
+        $view->assignMultiple([
             'configuration' => $this->configuration,
             'items' => $this->getUnindexedItems(),
             'options' => $this->options,
         ]);
 
-        return $this->view->render();
+        return $view->render('Widget/UnindexedSolrItems');
     }
 
     private function getUnindexedItems(): array
