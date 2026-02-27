@@ -178,7 +178,7 @@ EOT
             $conn = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('tx_solr_indexqueue_item');
             $res = $conn->executeStatement('delete from tx_solr_indexqueue_item where item_uid not in (select uid from pages where deleted=0) and item_type="pages"');
 
-            $this->logger->info('removed ' . $res->rowCount() . ' disconnected pages from index queue');
+            $logger->info('removed ' . $res->rowCount() . ' disconnected pages from index queue');
 
         }
 
