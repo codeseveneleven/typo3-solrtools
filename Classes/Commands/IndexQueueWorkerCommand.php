@@ -23,10 +23,10 @@ use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Sudhaus7\Logformatter\Logger\ConsoleLogger;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -34,7 +34,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class IndexQueueWorkerCommand extends Command
 {
-
     protected bool $purgeInvalidSites = false;
 
     /**
@@ -42,17 +41,77 @@ class IndexQueueWorkerCommand extends Command
      */
     protected function configure(): void
     {
-        $this->setDescription('This tool will work on the index queue for all sites. This can be used as a replacement for the Task QueueWorker, which runs only on one site per setup.
+        $this->setDescription('Process the Solr index queue for multiple sites in a single run')
+            ->setHelp(
+                <<<EOT
+The <info>%command.name%</info> command processes the Solr index queue for multiple TYPO3 sites.
 
-        This Command is heavily influenced by the IndexQueueWorkerTask of the jwtools2 extension
+This command is designed as a replacement for the default QueueWorker Task, which can only
+process one site per execution. It efficiently handles multiple sites in a single run by
+processing documents from sites with the oldest changed items first.
 
-        ');
+<comment>Usage:</comment>
+  <info>%command.full_name%</info>
+  <info>%command.full_name% --sites=10 --documents=50</info>
+  <info>%command.full_name% --purgeinvalidsites -vv</info>
 
-        $this->addOption('sites', null, InputOption::VALUE_REQUIRED, 'how many sites to run per run', 5);
+<comment>Options:</comment>
+  <info>--sites=N</info>           Maximum number of sites to process per run (default: 5)
+                        Sites are selected by oldest changed items in the queue
 
-        $this->addOption('documents', null, InputOption::VALUE_REQUIRED, 'how many documents to run per site', 25);
+  <info>--documents=N</info>       Maximum number of documents to index per site (default: 25)
+                        Each selected site will process up to this many documents
 
-        $this->addOption('purgeinvalidsites', null,InputOption::VALUE_NONE, 'Purge Invalid Sites');
+  <info>--purgeinvalidsites</info> Remove queue entries for sites that no longer exist
+                        Automatically cleans up orphaned index queue items
+
+  <info>-v, -vv, -vvv</info>       Increase verbosity of output
+                        Use -vv or higher to enable detailed logging
+
+<comment>How it works:</comment>
+1. Queries the index queue (tx_solr_indexqueue_item) for sites with pending items
+2. Selects up to N sites with the oldest changed timestamps
+3. Processes up to M documents for each selected site
+4. Skips invalid sites (optionally purges them from queue)
+5. Logs detailed information when verbosity is enabled (-vv or higher)
+
+<comment>Example workflow:</comment>
+  # Process default number of sites and documents
+  <info>%command.full_name%</info>
+
+  # Process more sites with more documents per site
+  <info>%command.full_name% --sites=20 --documents=100</info>
+
+  # Clean up invalid sites with verbose output
+  <info>%command.full_name% --purgeinvalidsites -vv</info>
+
+<comment>Note:</comment>
+This command is heavily influenced by the IndexQueueWorkerTask of the jwtools2 extension.
+EOT
+            );
+
+        $this->addOption(
+            'sites',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Maximum number of sites to process per run (sites with oldest pending items are selected first)',
+            5
+        );
+
+        $this->addOption(
+            'documents',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Maximum number of documents to index per site',
+            25
+        );
+
+        $this->addOption(
+            'purgeinvalidsites',
+            null,
+            InputOption::VALUE_NONE,
+            'Remove index queue entries for sites that no longer exist in the system'
+        );
     }
 
     /**
@@ -112,32 +171,46 @@ class IndexQueueWorkerCommand extends Command
                        )
                        ->groupBy('root')
                        ->orderBy('changed', 'ASC')
-                       ->setMaxResults($maxResults)
+                       //->setMaxResults($maxResults)
                        ->executeQuery();
 
         $result = [];
         while ($row = $stmt->fetchAssociative()) {
+            if (count($result) >= $maxResults) {
+                break;
+            }
             try {
                 $site = $repository->getSiteByRootPageId($row['root']);
                 if ($site instanceof Site) {
                     $logger->debug('found Site ' . $site->getRootPageId() . ' ' . $row['root'] . ' ' . $site->getDomain());
                     $result[] = $site;
                 } else {
-                    if ($this->purgeInvalidSites) {
-                        $logger->info( 'Site ' . $row['root'] . ' not found - deleting from queue' );
-                        GeneralUtility::makeInstance( ConnectionPool::class )
-                                      ->getConnectionForTable( 'tx_solr_indexqueue_item' )
-                                      ->delete(
-                                          'tx_solr_indexqueue_item',
-                                          [ 'root' => $row['root'] ]
-                                      );
-                    }
+                    $this->purgeIfNeeded($logger, $row['root']);
                 }
-            } catch (\Exception $e) {
+            } catch (\InvalidArgumentException $e) {
+                $this->purgeIfNeeded($logger, $row['root']);
+            } catch (\Throwable $e) {
                 $logger->error($e->getMessage(), ['code' => $e->getCode(), 'root' => $row['root']]);
             }
         }
 
         return $result;
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     * @param $root
+     */
+    private function purgeIfNeeded(LoggerInterface $logger, $root): void
+    {
+        if ($this->purgeInvalidSites) {
+            $logger->info('Site ' . $root . ' not found - deleting from queue');
+            GeneralUtility::makeInstance(ConnectionPool::class)
+              ->getConnectionForTable('tx_solr_indexqueue_item')
+              ->delete(
+                  'tx_solr_indexqueue_item',
+                  [ 'root' => $root ]
+              );
+        }
     }
 }

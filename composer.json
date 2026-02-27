@@ -15,7 +15,7 @@
 	],
 	"config": {
 		"platform": {
-			"php": "8.1.5"
+			"php": "8.3.5"
 		},
 		"allow-plugins": {
 			"typo3/cms-composer-installers": true,
@@ -23,24 +23,24 @@
 		}
 	},
 	"require": {
-		"php": "8.0.*||8.1.*||8.2.*||8.3.*",
-		"typo3/cms-core": "11.5.*||12.4.*",
-		"apache-solr-for-typo3/solr": "^11.5||^12"
+		"php": "^8.2",
+		"typo3/cms-core": "^12.4||^13.4",
+		"apache-solr-for-typo3/solr": "^12||^13"
 	},
 	"suggest": {
-		"hmmh/solr-file-indexer": "^2.5"
+		"hmmh/solr-file-indexer": "*"
 	},
 	"require-dev": {
-		"typo3/cms-backend": "^11.5||^12.4",
-		"typo3/cms-frontend": "^11.5||^12.4",
-		"typo3/cms-tstemplate": "^11.5||^12.4",
-		"typo3/cms-install": "^11.5||^12.4",
+		"typo3/cms-core": "^13.4",
+		"typo3/cms-backend": "^12.4||^13.4",
+		"typo3/cms-frontend": "^12.4||^13.4",
+		"typo3/cms-tstemplate": "^12.4||^13.4",
+		"typo3/cms-install": "^12.4||^13.4",
 		"friendsoftypo3/phpstan-typo3": "^0.9",
-		"vimeo/psalm": "^4.10",
-		"typo3/cms-lowlevel": "^11.5||^12.4",
+		"typo3/cms-lowlevel": "^12.4||^13.4",
 		"helhum/typo3-console": "*",
-		"typo3/coding-standards": "^0.5",
-		"hmmh/solr-file-indexer": "^2.5"
+		"typo3/coding-standards": "*",
+		"hmmh/solr-file-indexer": "*"
 	},
 
 	"autoload": {
@@ -75,7 +75,6 @@
 
 		"cmscacheflush": "@php vendor/bin/typo3cms cache:flush",
 		"csfixer": "@php vendor/bin/php-cs-fixer fix",
-		"psalm": "@php ./vendor/bin/psalm --no-cache  --show-info=true --php-version=8.1",
-		"phpstan": "@php ./vendor/bin/phpstan analyze -l 9 ./Classes"
+		"phpstan": "@php ./vendor/bin/phpstan analyze -l 6 ./Classes"
 	}
 }

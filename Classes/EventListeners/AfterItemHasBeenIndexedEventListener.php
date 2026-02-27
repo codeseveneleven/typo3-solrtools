@@ -21,7 +21,7 @@ use TYPO3\CMS\Core\Core\Environment;
 
 class AfterItemHasBeenIndexedEventListener
 {
-    public function __invoke(AfterItemHasBeenIndexedEvent $event)
+    public function __invoke(AfterItemHasBeenIndexedEvent $event): void
     {
         if (Environment::isCli() && isset($GLOBALS['CLILOGGER']) && $GLOBALS['CLILOGGER'] instanceof LoggerInterface) {
             $info = sprintf('Indexed %d | %s (%d)', $event->getItem()->getIndexQueueUid(), $event->getItem()->getType(), $event->getItem()->getRecordUid());

@@ -31,14 +31,63 @@ class SolrfilemetaCommand extends Command
 {
     protected function configure(): void
     {
-        $this->setDescription('This tool searches for relations of files in the database and adds the correct site reference in the Files metadata, in order for EXT:solr to index those files correctly
-        ');
-        $this->addOption('ext', null, InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, 'File extensions to allow', ['doc', 'docx', 'pdf']);
-        $this->addOption('cleanup', 'c', InputOption::VALUE_NONE, 'clean the site field in all meta data');
+        $this->setDescription('Add correct site references to file metadata for Solr indexing');
+
+        $this->setHelp(
+            <<<EOT
+This command synchronizes site references in file metadata (sys_file_metadata.enable_indexing)
+to ensure files are properly indexed by EXT:solr for the correct sites.
+
+<info>What it does:</info>
+• Scans sys_file_reference records to find file-to-page relationships
+• Searches tt_content fields (bodytext, header_link) for file links (t3://file?uid=)
+• Determines the site root for each page where files are referenced
+• Updates sys_file_metadata.enable_indexing with the correct site root page IDs
+• Only processes files with specified extensions (default: doc, docx, pdf)
+• Skips hidden/deleted pages and pages without accessible site roots
+
+<info>Prerequisites:</info>
+• Extension 'solr_file_indexer' must be installed
+
+<info>Usage Examples:</info>
+
+  # Process default file extensions (doc, docx, pdf)
+  <comment>./vendor/bin/typo3 solrfilemeta</comment>
+
+  # Process specific file extensions
+  <comment>./vendor/bin/typo3 solrfilemeta --ext=pdf --ext=doc</comment>
+
+  # Clean all site references before processing
+  <comment>./vendor/bin/typo3 solrfilemeta --cleanup</comment>
+
+  # Combine cleanup with custom extensions
+  <comment>./vendor/bin/typo3 solrfilemeta -c --ext=pdf --ext=docx --ext=txt</comment>
+
+  # Verbose output for debugging
+  <comment>./vendor/bin/typo3 solrfilemeta -v</comment>
+
+<info>Options:</info>
+EOT
+        );
+
+        $this->addOption(
+            'ext',
+            null,
+            InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
+            'File extensions to process (can be specified multiple times). Only files with these extensions will have their metadata updated.',
+            ['doc', 'docx', 'pdf']
+        );
+
+        $this->addOption(
+            'cleanup',
+            'c',
+            InputOption::VALUE_NONE,
+            'Clean the enable_indexing field in all file metadata records before processing. This removes all existing site references.'
+        );
     }
 
     /**
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     public function run(InputInterface $input, OutputInterface $output): int
     {
@@ -139,7 +188,7 @@ class SolrfilemetaCommand extends Command
      * @param OutputInterface $output
      * @param string[] $extensions
      *
-     * @throws \Doctrine\DBAL\Exception
+     * @throws Exception
      */
     private function runForFile(int $fileid, int $pid, OutputInterface $output, array $extensions): void
     {
@@ -188,7 +237,7 @@ class SolrfilemetaCommand extends Command
                     $site = GeneralUtility::makeInstance(SiteFinder::class)->getSiteByPageId($pid);
 
                     $indexing = GeneralUtility::intExplode(',', (string)$sys_file_meta['enable_indexing']);
-                    if ((is_countable($indexing) ? count($indexing) : 0) === 1 && $indexing[0] === 0) {
+                    if (count($indexing) === 1 && $indexing[0] === 0) {
                         $indexing = [];
                     }
                     if ($site->getRootPageId() > 0 && ! \in_array($site->getRootPageId(), $indexing)) {

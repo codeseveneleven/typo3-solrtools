@@ -22,9 +22,6 @@ use ApacheSolrForTypo3\Solr\IndexQueue\Queue;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\Exception;
 
-use function in_array;
-
-use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -41,26 +38,75 @@ class SolrCreateIndexCommand extends Command
      */
     protected function configure(): void
     {
-        $this->setDescription('This tool creates reindex tasks for solr per table and site or all sites
+        $this->setDescription('Creates Solr reindex tasks for specified tables and sites')
+            ->setHelp(
+                <<<EOT
+The <info>%command.name%</info> command creates reindex tasks for Apache Solr search indexes.
+It allows you to selectively reindex specific content types across one or multiple TYPO3 sites.
 
-        For example:
-        This will create an index-task for all sites and all pages and will clean the index first
-        ./vendor/bin/typo3 solr:tools:createindex -w pages --cleanup ALL
+<comment>Usage Examples:</comment>
 
-        This will create index-entried for all sites and all configured tables:
-        ./vendor/bin/typo3 solr:tools:createindex -w all all
+  <info>Reindex pages for all sites with index cleanup:</info>
+  %command.full_name% -w pages --cleanup all
 
-        ');
+  <info>Reindex all configured table types for all sites:</info>
+  %command.full_name% -w all all
+
+  <info>Reindex pages and news for a specific site:</info>
+  %command.full_name% -w pages -w news mysite
+
+  <info>Reindex multiple sites without cleanup:</info>
+  %command.full_name% -w pages site1 site2 site3
+
+<comment>Arguments:</comment>
+
+  <info>site</info>
+    One or more TYPO3 site identifiers to process.
+    Use <info>all</info> or <info>ALL</info> to process all configured sites.
+    Multiple site identifiers can be specified, separated by spaces.
+
+<comment>Options:</comment>
+
+  <info>-w, --what</info>
+    Specifies which table types to index (e.g., pages, news, tt_content).
+    Can be specified multiple times to index multiple types.
+    Use <info>all</info> or <info>ALL</info> to index all configured table types.
+    This option is required.
+
+  <info>-c, --cleanup</info>
+    When specified, removes existing index entries for the selected types
+    from the Solr index before creating new reindex tasks.
+    This ensures a clean reindex without duplicate or stale entries.
+
+<comment>Notes:</comment>
+
+  • This command only creates reindex tasks in the queue; it does not execute indexing
+  • To execute the indexing, run the index queue worker command afterwards
+  • Sites without Solr configuration will be automatically skipped
+  • Invalid site identifiers will be reported and skipped
+
+EOT
+            );
 
         $this->addArgument(
             'site',
             InputArgument::REQUIRED | InputArgument::IS_ARRAY,
-            'Site identifier or ALL for all sites'
+            'One or more TYPO3 site identifiers, or "all"/"ALL" to process all sites'
         );
 
-        $this->addOption('what', 'w', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'what to index (eq pages). Add "all" to index all configured table types');
+        $this->addOption(
+            'what',
+            'w',
+            InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
+            'Table type(s) to index (e.g., pages, news). Use "all"/"ALL" for all configured types. Can be specified multiple times.'
+        );
 
-        $this->addOption('cleanup', 'c', InputOption::VALUE_NONE, 'clean the solr index per site');
+        $this->addOption(
+            'cleanup',
+            'c',
+            InputOption::VALUE_NONE,
+            'Remove existing index entries before creating reindex tasks'
+        );
     }
 
     /**
@@ -73,7 +119,7 @@ class SolrCreateIndexCommand extends Command
         $sitesToLoad = (array)$input->getArgument('site');
 
         $siteFinder = GeneralUtility::makeInstance(SiteFinder::class);
-        if (in_array('all', $sitesToLoad) || in_array('ALL', $sitesToLoad)) {
+        if (\in_array('all', $sitesToLoad) || \in_array('ALL', $sitesToLoad)) {
             $sites = $siteFinder->getAllSites();
         } else {
             $sites = [];
@@ -89,7 +135,7 @@ class SolrCreateIndexCommand extends Command
         /** @var string[] $options */
         $options = (array)$input->getOption('what');
 
-        if (in_array('ALL', $options) || in_array('all', $options)) {
+        if (\in_array('ALL', $options) || \in_array('all', $options)) {
             $options = ['*'];
         }
 
@@ -99,10 +145,7 @@ class SolrCreateIndexCommand extends Command
             try {
                 /** @var ?Site $solrSite */
                 $solrSite = $solrSiteFinder->getSiteByRootPageId($site->getRootPageId());
-            } catch (InvalidArgumentException $e) {
-                $output->writeln('Skipping ' . $solrSite->getTitle() . ' ' . $solrSite->getDomain() . ' (no site)');
-                continue;
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $output->writeln("\n\r" . 'Skipping site with identifier ' . $site->getIdentifier() . '.');
                 $output->writeln('ERROR: ' . $e->getMessage() . "\n\r");
                 continue;

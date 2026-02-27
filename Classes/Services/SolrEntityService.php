@@ -16,7 +16,6 @@ namespace Code711\SolrTools\Services;
 use ApacheSolrForTypo3\Solr\Domain\Index\Queue\UpdateHandler\Events\RecordUpdatedEvent;
 use ApacheSolrForTypo3\Solr\System\Configuration\ExtensionConfiguration;
 use Doctrine\DBAL\Exception;
-use Doctrine\DBAL\Result;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -31,7 +30,7 @@ class SolrEntityService
     /**
      * @throws Exception
      */
-    public function handleObject(DomainObjectInterface $object)
+    public function handleObject(DomainObjectInterface $object): void
     {
         // get the table name
         $tableName = GeneralUtility::makeInstance(DataMapper::class)->convertClassNameToTableName($object::class);
@@ -42,7 +41,7 @@ class SolrEntityService
 
         /** @var Connection $query */
         $query = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($tableName);
-        /** @var Result $res */
+
         $fields = $query->select(
             [ '*' ],
             $tableName,
