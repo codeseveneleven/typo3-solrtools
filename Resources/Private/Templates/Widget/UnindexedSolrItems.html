@@ -1,0 +1,31 @@
+<html data-namespace-typo3-fluid="true" xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers">
+
+<f:if condition="{items}">
+    <f:then>
+        <div class="widget-table">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Typ</th>
+                        <th class="text-end">Unindexed Items</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <f:for as="item" each="{items}">
+                        <tr>
+                            <td>{item.type}</td>
+                            <td class="text-end"><strong>{item.count}</strong></td>
+                        </tr>
+                    </f:for>
+                </tbody>
+            </table>
+        </div>
+    </f:then>
+    <f:else>
+        <div class="widget-content-empty">
+            <p>No items found.</p>
+        </div>
+    </f:else>
+</f:if>
+
+</html>

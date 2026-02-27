@@ -47,6 +47,22 @@ services:
       - name: event.listener
         identifier: 'solrtools:AfterItemHasBeenIndexedEventListener'
 
+  # Dashboard Widget
+  dashboard.widget.solrtools.unindexed_items:
+    class: 'Code711\SolrTools\Widgets\UnindexedSolrItemsWidget'
+    arguments:
+      $view:
+        factory: ['@TYPO3\CMS\Dashboard\WidgetApi', 'getWidgetViewFactory']
+    tags:
+      - name: dashboard.widget
+        identifier: 'solrtools.unindexed_items'
+        groupNames: 'systemInfo'
+        title: 'LLL:EXT:solr_tools/Resources/Private/Language/locallang.xlf:widgets.unindexedItems.title'
+        description: 'LLL:EXT:solr_tools/Resources/Private/Language/locallang.xlf:widgets.unindexedItems.description'
+        iconIdentifier: 'content-dashboard'
+        height: 'medium'
+        width: 'medium'
+
 
 
 

@@ -31,7 +31,7 @@
 		"hmmh/solr-file-indexer": "*"
 	},
 	"require-dev": {
-		"typo3/cms-core": "^13.4",
+		"typo3/cms-core": "^12.4||^13.4",
 		"typo3/cms-backend": "^12.4||^13.4",
 		"typo3/cms-frontend": "^12.4||^13.4",
 		"typo3/cms-tstemplate": "^12.4||^13.4",
@@ -40,7 +40,8 @@
 		"typo3/cms-lowlevel": "^12.4||^13.4",
 		"helhum/typo3-console": "*",
 		"typo3/coding-standards": "*",
-		"hmmh/solr-file-indexer": "*"
+		"hmmh/solr-file-indexer": "*",
+		"typo3/cms-dashboard": "^12.4||^13.4"
 	},
 
 	"autoload": {

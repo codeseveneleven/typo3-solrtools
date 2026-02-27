@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+    <file source-language="en" datatype="plaintext" original="EXT:solr_tools/Resources/Private/Language/locallang.xlf" date="2024-01-01T00:00:00Z" product-name="solr_tools">
+        <header/>
+        <body>
+            <trans-unit id="widgets.unindexedItems.title" resname="widgets.unindexedItems.title">
+                <source>Unindexed Solr Items</source>
+            </trans-unit>
+            <trans-unit id="widgets.unindexedItems.description" resname="widgets.unindexedItems.description">
+                <source>Shows the count of unindexed Solr queue items grouped by indexing configuration</source>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>
