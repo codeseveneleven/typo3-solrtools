@@ -17,6 +17,7 @@ namespace Code711\SolrTools\Commands;
 
 use ApacheSolrForTypo3\Solr\Domain\Site\Site;
 use ApacheSolrForTypo3\Solr\Domain\Site\SiteRepository;
+use ApacheSolrForTypo3\Solr\Exception\InvalidArgumentException;
 use ApacheSolrForTypo3\Solr\System\Environment\CliEnvironment;
 use Code711\SolrTools\Domain\Index\IndexService;
 use Doctrine\DBAL\ConnectionException;
@@ -235,7 +236,7 @@ EOT
                 } else {
                     $this->purgeIfNeeded($logger, $row['root']);
                 }
-            } catch (\InvalidArgumentException $e) {
+            } catch (InvalidArgumentException $e) {
                 $this->purgeIfNeeded($logger, $row['root']);
             } catch (\Throwable $e) {
                 $logger->error($e->getMessage(), ['code' => $e->getCode(), 'root' => $row['root']]);
