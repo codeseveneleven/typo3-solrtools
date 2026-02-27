@@ -176,9 +176,9 @@ EOT
         if ($input->getOption('cleanupdisconnectedpages')) {
             //select * from tx_solr_indexqueue_item where item_uid not in (select uid from pages where deleted=0) and item_type='pages'
             $conn = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('tx_solr_indexqueue_item');
-            $res = $conn->executeStatement('delete from tx_solr_indexqueue_item where item_uid not in (select uid from pages where deleted=0) and item_type="pages"');
+            $affectedRows = $conn->executeStatement('delete from tx_solr_indexqueue_item where item_uid not in (select uid from pages where deleted=0) and item_type="pages"');
 
-            $logger->info('removed ' . $res->rowCount() . ' disconnected pages from index queue');
+            $logger->info('removed ' . $affectedRows . ' disconnected pages from index queue');
 
         }
 
